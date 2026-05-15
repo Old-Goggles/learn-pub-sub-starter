@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 
+	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 
@@ -22,26 +21,48 @@ func main() {
 
 	defer conn.Close()
 
+	gamelogic.PrintServerHelp()
+
 	channel, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("Unable to open channel %v", err)
 	}
 
-	pubsub.PublishJSON(
-		channel,
-		routing.ExchangePerilDirect,
-		routing.PauseKey,
-		routing.PlayingState{
-			IsPaused: true,
-		})
-
 	fmt.Println("Peril server is connected and ready to rumble!")
 
-	signalChan := make(chan os.Signal, 1)
+	for {
+		words := gamelogic.GetInput()
+		if len(words) == 0 {
+			continue
+		}
 
-	signal.Notify(signalChan, os.Interrupt)
+		switch words[0] {
+		case "pause":
+			pubsub.PublishJSON(
+				channel,
+				routing.ExchangePerilDirect,
+				routing.PauseKey,
+				routing.PlayingState{
+					IsPaused: true,
+				})
+			fmt.Println("Peril Server is paused, take a break.")
 
-	<-signalChan
+		case "resume":
+			pubsub.PublishJSON(
+				channel,
+				routing.ExchangePerilDirect,
+				routing.PauseKey,
+				routing.PlayingState{
+					IsPaused: false,
+				})
+			fmt.Println("Peril server is connected and ready to rumble!")
 
-	fmt.Println("The battle is over... shutting down Peril server.")
+		case "quit":
+			fmt.Println("The battle is over... shutting down Peril server.")
+			return
+
+		default:
+			fmt.Println("Command Not Found")
+		}
+	}
 }
