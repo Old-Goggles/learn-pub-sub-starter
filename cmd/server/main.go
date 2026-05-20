@@ -30,6 +30,13 @@ func main() {
 
 	fmt.Println("Peril server is connected and ready to rumble!")
 
+	_, result, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.Durable)
+	if err != nil {
+		log.Fatalf("Unable to Declare and Bind Queue %v", err)
+	}
+
+	fmt.Printf("Queue %v declared and bound!\n", result.Name)
+
 	for {
 		words := gamelogic.GetInput()
 		if len(words) == 0 {
