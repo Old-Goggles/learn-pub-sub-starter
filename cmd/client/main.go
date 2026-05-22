@@ -28,6 +28,13 @@ func main() {
 
 	gameState := gamelogic.NewGameState(userName)
 
+	channel, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("Unable to open channel %v", err)
+	}
+
+	fmt.Println("Peril server is connected and ready to rumble!")
+
 	err = pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilDirect,
@@ -35,6 +42,17 @@ func main() {
 		routing.PauseKey,
 		pubsub.Transient,
 		handlerPause(gameState))
+	if err != nil {
+		log.Fatalf("Unable to Subscribe %v", err)
+	}
+
+	err = pubsub.SubscribeJSON(
+		conn,
+		routing.ExchangePerilTopic,
+		routing.ArmyMovesPrefix+"."+userName,
+		routing.ArmyMovesPrefix+".*",
+		pubsub.Transient,
+		handlerMove(gameState))
 	if err != nil {
 		log.Fatalf("Unable to Subscribe %v", err)
 	}
@@ -60,7 +78,17 @@ func main() {
 				continue
 			}
 
-			fmt.Printf("%v was successful.", move)
+			err = pubsub.PublishJSON(
+				channel,
+				routing.ExchangePerilTopic,
+				routing.ArmyMovesPrefix+"."+userName,
+				move,
+			)
+			if err != nil {
+				fmt.Printf("error publishing move: %s\n", err)
+				continue
+			}
+			fmt.Printf("Moved %d units to %s\n", len(move.Units), move.ToLocation)
 
 		case "status":
 			gameState.CommandStatus()
