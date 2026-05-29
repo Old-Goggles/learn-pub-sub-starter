@@ -52,7 +52,18 @@ func main() {
 		routing.ArmyMovesPrefix+"."+userName,
 		routing.ArmyMovesPrefix+".*",
 		pubsub.Transient,
-		handlerMove(gameState))
+		handlerMove(gameState, channel))
+	if err != nil {
+		log.Fatalf("Unable to Subscribe %v", err)
+	}
+
+	err = pubsub.SubscribeJSON(
+		conn,
+		routing.ExchangePerilTopic,
+		"war",
+		routing.WarRecognitionsPrefix+".*",
+		pubsub.Durable,
+		handlerWar(gameState))
 	if err != nil {
 		log.Fatalf("Unable to Subscribe %v", err)
 	}
