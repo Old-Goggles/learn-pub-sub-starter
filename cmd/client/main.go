@@ -63,7 +63,7 @@ func main() {
 		"war",
 		routing.WarRecognitionsPrefix+".*",
 		pubsub.Durable,
-		handlerWar(gameState))
+		handlerWar(gameState, channel))
 	if err != nil {
 		log.Fatalf("Unable to Subscribe %v", err)
 	}
