@@ -56,7 +56,7 @@ func DeclareAndBind(
 	exchange,
 	queueName,
 	key string,
-	queueType SimpleQueueType,
+	simpleQueueType SimpleQueueType,
 ) (*amqp.Channel, amqp.Queue, error) {
 	channel, err := conn.Channel()
 	if err != nil {
@@ -65,9 +65,9 @@ func DeclareAndBind(
 
 	queue, err := channel.QueueDeclare(
 		queueName,
-		queueType == Durable,
-		queueType == Transient,
-		queueType == Transient,
+		simpleQueueType == Durable,
+		simpleQueueType == Transient,
+		simpleQueueType == Transient,
 		false,
 		amqp.Table{
 			"x-dead-letter-exchange": "peril_dlx",

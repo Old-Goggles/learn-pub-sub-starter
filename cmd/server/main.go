@@ -30,12 +30,24 @@ func main() {
 
 	fmt.Println("Peril server is connected and ready to rumble!")
 
-	_, result, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routing.GameLogSlug+".*", pubsub.Durable)
+	err = pubsub.SubscribeGob[routing.GameLog](
+		conn,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug,
+		routing.GameLogSlug+".*",
+		pubsub.Durable,
+		func(log routing.GameLog) pubsub.Acktype {
+			defer gamelogic.PrintServerHelp()
+			err := gamelogic.WriteLog(log)
+			if err != nil {
+				return pubsub.NackRequeue
+			}
+			return pubsub.Ack
+		},
+	)
 	if err != nil {
-		log.Fatalf("Unable to Declare and Bind Queue %v", err)
+		log.Fatalf("could not subscribe to game_logs: %v", err)
 	}
-
-	fmt.Printf("Queue %v declared and bound!\n", result.Name)
 
 	for {
 		words := gamelogic.GetInput()
