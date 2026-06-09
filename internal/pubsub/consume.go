@@ -31,6 +31,11 @@ func subscribe[T any](
 		return fmt.Errorf("could not subscribe to %s: %v", queueName, err)
 	}
 
+	err = amqpChan.Qos(10, 0, false)
+	if err != nil {
+		return fmt.Errorf("could not set qos: %v", err)
+	}
+
 	deliveries, err := amqpChan.Consume(
 		queue.Name,
 		"",
